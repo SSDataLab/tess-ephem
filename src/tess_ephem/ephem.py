@@ -112,7 +112,9 @@ def _get_horizons_ephem(
     This is simple cached wrapper around astroquery's Horizons.ephemerides.
     """
     epochs = {"start": start.iso, "stop": stop.iso, "step": step}
-    log.debug(f"Horizons query parameters:\n\t{id=}\n\t{location=}\n\t{epochs=}")
+    log.debug(
+        f"Horizons query parameters:\n\tid={id}\n\tlocation={location}\n\tepochs={epochs}"
+    )
     t = Horizons(id=id, location=location, epochs=epochs)
     result = t.ephemerides(quantities=quantities)
     log.debug(f"Received {len(result)} ephemeris results")
