@@ -6,7 +6,7 @@ authors = ["Geert Barentsen <geert@barentsen.be>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-tess-locator = {path = "../tess-locator", develop = true}
+tess-locator = ">=0.2.0"
 scipy = "^1.5.4"
 astroquery = "^0.4.1"
 numpy = "^1.19.4"
@@ -23,6 +23,7 @@ black = "^20.8b1"
 pytest-cov = "^2.10.1"
 pytest-xdist = "^2.1.0"
 isort = "^5.6.4"
+tess-locator = {path = "../tess-locator", develop = true}
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
