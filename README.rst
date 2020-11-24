@@ -1,7 +1,7 @@
 tess-ephem
 ==========
 
-**Where are Solar System objects located in TESS FFI data?***
+**Where are Solar System objects located in TESS FFI data?**
 
 `tess-ephem` is a user-friendly package which enables users to compute the positions of Solar System objects -- asteroids, comets, and planets --
 in the data archive of NASA's TESS Space Telescope.
