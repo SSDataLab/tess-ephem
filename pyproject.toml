@@ -1,8 +1,19 @@
 [tool.poetry]
 name = "tess-ephem"
 version = "0.1.0"
-description = ""
-authors = ["Geert Barentsen <geert@barentsen.be>"]
+description = "Where are Solar System objects located in TESS FFI data?"
+license = "MIT"
+authors = ["Geert Barentsen <hello@geert.io>",
+           "Christina Hedges",
+           "Jessie Dotson"]
+readme = "README.rst"
+homepage = "https://github.com/SSDataLab/tess-ephem"
+repository = "https://github.com/SSDataLab/tess-ephem"
+keywords = ["NASA, TESS, Astronomy"]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"
