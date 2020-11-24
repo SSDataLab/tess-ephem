@@ -1,7 +1,16 @@
 tess-ephem
 ==========
 
-**Where are Solar System objects located in TESS FFI data?***
+**Where are Solar System objects located in TESS FFI data?**
+
+|pypi| |pytest| |black| |flake8| |mypy|
+
+.. |pypi| image:: https://img.shields.io/pypi/v/tess-ephem
+                :target: https://pypi.python.org/pypi/tess-ephem
+.. |pytest| image:: https://github.com/SSDataLab/tess-ephem/workflows/pytest/badge.svg
+.. |black| image:: https://github.com/SSDataLab/tess-ephem/workflows/black/badge.svg
+.. |flake8| image:: https://github.com/SSDataLab/tess-ephem/workflows/flake8/badge.svg
+.. |mypy| image:: https://github.com/SSDataLab/tess-ephem/workflows/mypy/badge.svg
 
 `tess-ephem` is a user-friendly package which enables users to compute the positions of Solar System objects -- asteroids, comets, and planets --
 in the data archive of NASA's TESS Space Telescope.
