@@ -5,7 +5,7 @@ description = ""
 authors = ["Geert Barentsen <geert@barentsen.be>"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 tess-locator = ">=0.2.0"
 scipy = "^1.5.4"
 astroquery = "^0.4.1"
