@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "tess-ephem"
+version = "0.1.0"
+description = ""
+authors = ["Geert Barentsen <geert@barentsen.be>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+tess-locator = {path = "../tess-locator", develop = true}
+scipy = "^1.5.4"
+astroquery = "^0.4.1"
+numpy = "^1.19.4"
+pandas = "^1.1.4"
+astropy = "^4.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.1.2"
+jupyterlab = "^2.2.9"
+line-profiler = "^3.1.0"
+mypy = "^0.790"
+flake8 = "^3.8.4"
+black = "^20.8b1"
+pytest-cov = "^2.10.1"
+pytest-xdist = "^2.1.0"
+isort = "^5.6.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
