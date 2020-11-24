@@ -24,6 +24,7 @@ class TessEphem:
         stop: Time = "2021-01-01",
         step: str = "7D",
         location: str = "@TESS",
+        id_type: str = "smallbody",
     ):
         """
         Parametrized as start, stop, step because it is the most efficient way to
@@ -40,7 +41,12 @@ class TessEphem:
         """
         log.info(f"Started querying JPL/Horizons for for ephemeris (id='{target}')")
         eph = _get_horizons_ephem(
-            id=target, start=start, stop=stop, step=step, location=location
+            id=target,
+            id_type=id_type,
+            start=start,
+            stop=stop,
+            step=step,
+            location=location,
         )
         self._raf = create_angle_interpolator(
             eph["datetime_jd"], eph["RA"], enforce_positive=True
@@ -103,9 +109,10 @@ def _get_horizons_ephem(
     id,
     start: Time,
     stop: Time,
-    step="7D",
-    location="@TESS",
-    quantities="1,3,9,19,20,43",
+    step: str = "7D",
+    id_type: str = "smallbody",
+    location: str = "@TESS",
+    quantities: str = "1,3,9,19,20,43",
 ):
     """Returns JPL Horizons ephemeris.
 
@@ -115,13 +122,15 @@ def _get_horizons_ephem(
     log.debug(
         f"Horizons query parameters:\n\tid={id}\n\tlocation={location}\n\tepochs={epochs}"
     )
-    t = Horizons(id=id, location=location, epochs=epochs)
+    t = Horizons(id=id, id_type=id_type, location=location, epochs=epochs)
     result = t.ephemerides(quantities=quantities)
     log.debug(f"Received {len(result)} ephemeris results")
     return result
 
 
-def ephem(target: str, time: Time = None, verbose: bool = False) -> DataFrame:
+def ephem(
+    target: str, time: Time = None, verbose: bool = False, id_type: str = "smallbody"
+) -> DataFrame:
     """Returns the ephemeris of a Solar System body in the TESS FFI data set.
 
     Parameters
@@ -131,6 +140,12 @@ def ephem(target: str, time: Time = None, verbose: bool = False) -> DataFrame:
     time : Time
         Times for which to compute the ephemeris.
         By default, one time stamp for every day in the TESS mission will be queried.
+    verbose : bool
+        Return extra parameters?
+    id_type : str
+        JPL/Horizons target identifier type.
+        One of "smallbody", "majorbody", "designation", "name", "asteroid_name",
+        "comet_name", or "designation".
 
     Returns
     -------
@@ -152,5 +167,5 @@ def ephem(target: str, time: Time = None, verbose: bool = False) -> DataFrame:
         start = time[0] - 7
         stop = time[-1] + 7
         step = "7D"
-    te = TessEphem(target, start=start, stop=stop, step=step)
+    te = TessEphem(target, start=start, stop=stop, step=step, id_type=id_type)
     return te.predict(time=time, verbose=verbose)
