@@ -98,7 +98,7 @@ class TessEphem:
         return df
 
 
-@lru_cache
+@lru_cache()
 def _get_horizons_ephem(
     id,
     start: Time,
