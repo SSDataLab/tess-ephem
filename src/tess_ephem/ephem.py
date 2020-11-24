@@ -52,7 +52,11 @@ class TessEphem:
             eph["datetime_jd"], eph["RA"], enforce_positive=True
         )
         self._decf = create_angle_interpolator(eph["datetime_jd"], eph["DEC"])
-        self._vf = CubicSpline(eph["datetime_jd"], eph["V"])
+        if "V" in eph.columns:
+            mag = eph["V"]
+        else:
+            mag = eph["Tmag"]  # total comet magnitude
+        self._vf = CubicSpline(eph["datetime_jd"], mag)
         # Sun-target distance
         self._rf = CubicSpline(eph["datetime_jd"], eph["r"])
         # Observer-target distance
@@ -92,7 +96,6 @@ class TessEphem:
         )
 
     def predict(self, time: Time, verbose: bool = False) -> DataFrame:
-        # return self.ephemerides
         sky = self.predict_sky(time)
         crd = SkyCoord(sky.ra, sky.dec, unit="deg")
         log.info("Started matching the ephemeris to TESS observations")
