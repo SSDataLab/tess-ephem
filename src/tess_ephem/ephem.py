@@ -52,7 +52,11 @@ class TessEphem:
             eph["datetime_jd"], eph["RA"], enforce_positive=True
         )
         self._decf = create_angle_interpolator(eph["datetime_jd"], eph["DEC"])
-        self._vf = CubicSpline(eph["datetime_jd"], eph["V"])
+        if "V" in eph.columns:
+            mag = eph["V"]
+        else:
+            mag = eph["Tmag"]  # total comet magnitude
+        self._vf = CubicSpline(eph["datetime_jd"], mag)
         # Sun-target distance
         self._rf = CubicSpline(eph["datetime_jd"], eph["r"])
         # Observer-target distance
@@ -92,7 +96,6 @@ class TessEphem:
         )
 
     def predict(self, time: Time, verbose: bool = False) -> DataFrame:
-        # return self.ephemerides
         sky = self.predict_sky(time)
         crd = SkyCoord(sky.ra, sky.dec, unit="deg")
         log.info("Started matching the ephemeris to TESS observations")
@@ -129,7 +132,11 @@ def _get_horizons_ephem(
 
 
 def ephem(
-    target: str, time: Time = None, verbose: bool = False, id_type: str = "smallbody"
+    target: str,
+    time: Time = None,
+    verbose: bool = False,
+    id_type: str = "smallbody",
+    interpolation_step: str = "12H",
 ) -> DataFrame:
     """Returns the ephemeris of a Solar System body in the TESS FFI data set.
 
@@ -146,6 +153,8 @@ def ephem(
         JPL/Horizons target identifier type.
         One of "smallbody", "majorbody", "designation", "name", "asteroid_name",
         "comet_name", or "designation".
+    interpolation_step : str
+        Resolution at which ephemeris data will be obtained from JPL Horizons.
 
     Returns
     -------
@@ -156,7 +165,6 @@ def ephem(
         dates = tl.wcs_catalog.get_sector_dates()
         start = Time(dates.iloc[0].begin[0:10])
         stop = Time(dates.iloc[-1].end[0:10])
-        step = "7D"
         days = np.ceil((stop - start).sec / (60 * 60 * 24))
         time = start + np.arange(-1, days + 1, 1.0)
     else:
@@ -166,6 +174,7 @@ def ephem(
             time = time.reshape((1,))
         start = time[0] - 7
         stop = time[-1] + 7
-        step = "7D"
-    te = TessEphem(target, start=start, stop=stop, step=step, id_type=id_type)
+    te = TessEphem(
+        target, start=start, stop=stop, step=interpolation_step, id_type=id_type
+    )
     return te.predict(time=time, verbose=verbose)
