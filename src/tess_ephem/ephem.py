@@ -22,7 +22,7 @@ class TessEphem:
         target: str,
         start: Time = "2018-05-01",
         stop: Time = "2021-01-01",
-        step: str = "7D",
+        step: str = "12H",
         location: str = "@TESS",
         id_type: str = "smallbody",
     ):
@@ -112,7 +112,7 @@ def _get_horizons_ephem(
     id,
     start: Time,
     stop: Time,
-    step: str = "7D",
+    step: str = "12H",
     id_type: str = "smallbody",
     location: str = "@TESS",
     quantities: str = "1,3,9,19,20,43",
