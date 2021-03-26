@@ -9,8 +9,8 @@ from astroquery.jplhorizons import Horizons
 from pandas import DataFrame
 from scipy.interpolate import CubicSpline
 
-import tess_locator as tl
 from tess_locator import locate
+from tess_locator.dates import get_sector_dates
 
 from .angle import create_angle_interpolator
 from . import log
@@ -162,9 +162,9 @@ def ephem(
         One row for each time stamp that matched a TESS observation.
     """
     if time is None:
-        dates = tl.wcs_catalog.get_sector_dates()
+        dates = get_sector_dates()
         start = Time(dates.iloc[0].begin[0:10])
-        stop = Time(dates.iloc[-1].end[0:10])
+        stop = Time(dates.iloc[-3].end[0:10])  # use `-3` because Horizons does not contain TESS ephemeris beyond Jul 2022
         days = np.ceil((stop - start).sec / (60 * 60 * 24))
         time = start + np.arange(-1, days + 1, 1.0)
     else:
