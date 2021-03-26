@@ -164,7 +164,9 @@ def ephem(
     if time is None:
         dates = get_sector_dates()
         start = Time(dates.iloc[0].begin[0:10])
-        stop = Time(dates.iloc[-3].end[0:10])  # use `-3` because Horizons does not contain TESS ephemeris beyond Jul 2022
+        stop = Time(
+            dates.iloc[-3].end[0:10]
+        )  # use `-3` because Horizons does not contain TESS ephemeris beyond Jul 2022
         days = np.ceil((stop - start).sec / (60 * 60 * 24))
         time = start + np.arange(-1, days + 1, 1.0)
     else:
