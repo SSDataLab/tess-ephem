@@ -1,5 +1,6 @@
 """Defines the main interface, i.e. the `ephem` function."""
 from functools import lru_cache
+from typing import Optional
 
 import numpy as np
 from astropy.coordinates import SkyCoord
@@ -134,6 +135,7 @@ def _get_horizons_ephem(
 def ephem(
     target: str,
     time: Time = None,
+    sector: Optional[int] = None,
     verbose: bool = False,
     id_type: str = "smallbody",
     interpolation_step: str = "12H",
@@ -147,6 +149,8 @@ def ephem(
     time : Time
         Times for which to compute the ephemeris.
         By default, one time stamp for every day in the TESS mission will be queried.
+    sector : int
+        Sector number.  Will be ignored if ``time`` is passed.
     verbose : bool
         Return extra parameters?
     id_type : str
@@ -162,11 +166,13 @@ def ephem(
         One row for each time stamp that matched a TESS observation.
     """
     if time is None:
-        dates = get_sector_dates()
+        dates = get_sector_dates(sector=sector)
         start = Time(dates.iloc[0].begin[0:10])
-        stop = Time(
-            dates.iloc[-3].end[0:10]
-        )  # use `-3` because Horizons does not contain TESS ephemeris beyond Jul 2022
+        if sector:
+            stop = Time(dates.iloc[-1].end[0:10])
+        else:
+            # Hack: use `-3` because Horizons does not contain TESS ephemeris beyond Jul 2022
+            stop = Time(dates.iloc[-3].end[0:10])
         days = np.ceil((stop - start).sec / (60 * 60 * 24))
         time = start + np.arange(-1, days + 1, 1.0)
     else:
