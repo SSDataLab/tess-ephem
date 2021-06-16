@@ -50,9 +50,9 @@ class TessEphem:
             location=location,
         )
         self._raf = create_angle_interpolator(
-            eph["datetime_jd"], eph["RA"], enforce_positive=True
+            eph["datetime_jd"], eph["RA_app"], enforce_positive=True
         )
-        self._decf = create_angle_interpolator(eph["datetime_jd"], eph["DEC"])
+        self._decf = create_angle_interpolator(eph["datetime_jd"], eph["DEC_app"])
         if "V" in eph.columns:
             mag = eph["V"]
         else:
@@ -116,7 +116,7 @@ def _get_horizons_ephem(
     step: str = "12H",
     id_type: str = "smallbody",
     location: str = "@TESS",
-    quantities: str = "1,3,9,19,20,43",
+    quantities: str = "2,3,9,19,20,43",
 ):
     """Returns JPL Horizons ephemeris.
 
