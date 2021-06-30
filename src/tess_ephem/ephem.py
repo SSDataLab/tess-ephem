@@ -161,8 +161,7 @@ def ephem(
     interpolation_step : str
         Resolution at which ephemeris data will be obtained from JPL Horizons.
     aberrate: bool
-        If True then use tess-point's approximate DVA when computing the sky coordinates.
-        Note this only changes the returned R.A. and Decl. when verbose=True.
+        If True then use tess-point's approximate DVA when computing the pixel coordinates.
 
     Returns
     -------
