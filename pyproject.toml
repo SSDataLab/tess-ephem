@@ -22,7 +22,7 @@ astroquery = "0.4.6"
 numpy = "^1.23.0"
 pandas = "^1.4.4"
 astropy = "^5.2.0"
-tess-locator = { git = "https://github.com/jorgemarpa/tess-locator.git" branch = "new_ver"}
+tess-locator = "^0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"
