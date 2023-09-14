@@ -16,13 +16,13 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-scipy = "^1.5.4"
-astroquery = "^0.4.1"
-numpy = "^1.19.4"
-pandas = "^1.1.4"
-astropy = "^4.1"
-tess-locator = ">=0.5.0"
+python = "^3.8"
+scipy = "^1.9.0"
+astroquery = "0.4.6"
+numpy = "^1.23.0"
+pandas = "^1.4.4"
+astropy = "^5.2.0"
+tess-locator = "^0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"
