@@ -6,5 +6,5 @@ log.addHandler(logging.StreamHandler())
 
 from .ephem import ephem, TessEphem  # noqa: E402
 
-__version__ = "0.4.dev"
+__version__ = "0.4.0"
 __all__ = ["ephem", "TessEphem"]
