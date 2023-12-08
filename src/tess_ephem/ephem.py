@@ -96,7 +96,9 @@ class TessEphem:
             }
         )
 
-    def predict(self, time: Time, aberrate: bool = True, verbose: bool = False) -> DataFrame:
+    def predict(
+        self, time: Time, aberrate: bool = True, verbose: bool = False
+    ) -> DataFrame:
         sky = self.predict_sky(time)
         crd = SkyCoord(sky.ra, sky.dec, unit="deg")
         log.info("Started matching the ephemeris to TESS observations")
@@ -139,7 +141,7 @@ def ephem(
     verbose: bool = False,
     id_type: str = "smallbody",
     interpolation_step: str = "12H",
-    aberrate: bool = True
+    aberrate: bool = True,
 ) -> DataFrame:
     """Returns the ephemeris of a Solar System body in the TESS FFI data set.
 
