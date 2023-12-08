@@ -5,6 +5,7 @@ description = "Where are Solar System objects located in TESS FFI data?"
 license = "MIT"
 authors = ["Geert Barentsen <hello@geert.io>",
            "Christina Hedges",
+           "Jorge Martinez-Palomera",
            "Jessie Dotson"]
 readme = "README.rst"
 homepage = "https://github.com/SSDataLab/tess-ephem"
