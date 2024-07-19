@@ -4,14 +4,15 @@ from typing import Optional
 
 import numpy as np
 from astropy.coordinates import SkyCoord
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
 from astropy import units as u
 from astroquery.jplhorizons import Horizons
 from pandas import DataFrame
 from scipy.interpolate import CubicSpline
 
 from tess_locator import locate
-from tess_locator.dates import get_sector_dates
+
+from tesswcs import pointings
 
 from .angle import create_angle_interpolator
 from . import log
@@ -109,6 +110,51 @@ class TessEphem:
             df = df[["sector", "camera", "ccd", "column", "row"]]
         return df
 
+    @staticmethod
+    def from_sector(
+        target: str, sector: int, id_type: str = "smallbody", step: str = "12H", return_time: bool = False
+    ):
+        """
+        Initialises TessEphem object from sector number.
+
+        Parameters
+        ----------
+        target : str
+            Horizons target ID.
+        sector : int
+            Sector number.
+        id_type : str
+            JPL/Horizons target identifier type.
+            One of "smallbody", "majorbody", "designation", "name", "asteroid_name",
+            "comet_name", or "designation".
+        step : str
+            Resolution at which ephemeris data will be obtained from JPL Horizons.
+        return_time: bool
+            If True then return start and stop time of sector.
+
+        Returns
+        -------
+        TessEphem
+            Initialiased TessEphem object.
+        start : Time
+            If return_time, sector start time.
+        stop : Time
+            If return_time, sector end time.
+        """
+
+        # Sector must be in pointings
+        if sector not in pointings['Sector']:
+            raise KeyError('Sector must be in range {0}-{1}'.format(pointings['Sector'][0],pointings['Sector'][-1]))
+
+        # Define start and stop of sector using pointings file from tesswcs
+        start, stop = Time(pointings[pointings['Sector'] == sector]['Start'][0], format='jd'), Time(pointings[pointings['Sector'] == sector]['End'][0], format='jd')
+
+        # Return TessEphem object (and start/stop, if return_time=True)
+        if return_time:
+            return TessEphem(target, start=start, stop=stop, step=step, id_type=id_type), start, stop
+        else: 
+            return TessEphem(target, start=start, stop=stop, step=step, id_type=id_type)
+
 
 @lru_cache()
 def _get_horizons_ephem(
@@ -171,15 +217,12 @@ def ephem(
         One row for each time stamp that matched a TESS observation.
     """
     if time is None:
-        dates = get_sector_dates(sector=sector)
-        start = Time(dates.iloc[0].begin[0:10])
-        if sector:
-            stop = Time(dates.iloc[-1].end[0:10])
-        else:
-            # Hack: use `-3` because Horizons does not contain TESS ephemeris beyond Jul 2022
-            stop = Time(dates.iloc[-3].end[0:10])
+        te, start, stop = TessEphem.from_sector(target, sector, step=interpolation_step, id_type=id_type, return_time=True)
+
+        # One time stamp per day between start and stop, with one-day buffer.
         days = np.ceil((stop - start).sec / (60 * 60 * 24))
-        time = start + np.arange(-1, days + 1, 1.0)
+        time = start + TimeDelta(np.arange(-1, days + 2, 1.0), format='jd')
+
     else:
         if not isinstance(time, Time):
             time = Time(time)
@@ -187,7 +230,7 @@ def ephem(
             time = time.reshape((1,))
         start = time[0] - 7
         stop = time[-1] + 7
-    te = TessEphem(
-        target, start=start, stop=stop, step=interpolation_step, id_type=id_type
-    )
+        te = TessEphem(
+            target, start=start, stop=stop, step=interpolation_step, id_type=id_type
+        )
     return te.predict(time=time, aberrate=aberrate, verbose=verbose)
