@@ -7,12 +7,10 @@ from astropy.coordinates import SkyCoord
 from astropy.time import Time, TimeDelta
 from astropy import units as u
 from astroquery.jplhorizons import Horizons
-from pandas import DataFrame
+from pandas import DataFrame, concat
 from scipy.interpolate import CubicSpline
 
-from tess_locator import locate
-
-from tesswcs import pointings
+from tesswcs import locate, pointings
 
 from .angle import create_angle_interpolator
 from . import log
@@ -98,16 +96,52 @@ class TessEphem:
         )
 
     def predict(
-        self, time: Time, aberrate: bool = True, verbose: bool = False
+        self, time: Time, verbose: bool = False 
     ) -> DataFrame:
+        """
+        Predicts position of target at times.
+
+        Parameters
+        ----------
+        time : Time
+            Times for which to compute the ephemeris.
+        verbose : bool
+            Return extra parameters?
+
+        Returns
+        -------
+        ephemeris : DataFrame
+            One row for each time stamp that matched a TESS observation.
+        """
+
         sky = self.predict_sky(time)
         crd = SkyCoord(sky.ra, sky.dec, unit="deg")
         log.info("Started matching the ephemeris to TESS observations")
-        locresult = locate(crd, time=time, aberrate=aberrate)
-        df = locresult.to_pandas().merge(sky, on="time", how="inner")
-        df = df.set_index("time")
+
+        # Get sector, camera, ccd, col, row at each time.
+        df = DataFrame()
+        for i,t in enumerate(time):
+            try:
+                result = locate.get_pixel_locations(crd[i], time=t).to_pandas()
+                result['time'] = t
+                df = concat([df,result[['time', 'Sector', 'Camera', 'CCD', 'Column', 'Row']]])
+            # If object is not observed by TESS at time, skip time.
+            except ValueError:
+                continue
+
+        if len(df) == 0:
+            print('Warning: Target not observed by TESS at defined times.')
+
+        # Make column names lowercase in df
+        df.columns = [x.lower() for x in df.columns]
+        # Make sector, camera, ccd integers
+        df = df.astype({'sector': int, 'camera': int, 'ccd': int})
+        if verbose:
+            df = df.merge(sky, on='time', how="inner")
+        df = df.set_index('time')
         if not verbose:
-            df = df[["sector", "camera", "ccd", "column", "row"]]
+            df = df[['sector', 'camera', 'ccd', 'column', 'row']]
+
         return df
 
     @staticmethod
@@ -149,11 +183,14 @@ class TessEphem:
         # Define start and stop of sector using pointings file from tesswcs
         start, stop = Time(pointings[pointings['Sector'] == sector]['Start'][0], format='jd'), Time(pointings[pointings['Sector'] == sector]['End'][0], format='jd')
 
+        # Buffer of one day on start, stop for future interpolation of ephemeris. 
+        start_buffer, stop_buffer = start - TimeDelta(1, format='jd'), stop + TimeDelta(1, format='jd')
+
         # Return TessEphem object (and start/stop, if return_time=True)
         if return_time:
-            return TessEphem(target, start=start, stop=stop, step=step, id_type=id_type), start, stop
+            return TessEphem(target, start=start_buffer, stop=stop_buffer, step=step, id_type=id_type), start, stop
         else: 
-            return TessEphem(target, start=start, stop=stop, step=step, id_type=id_type)
+            return TessEphem(target, start=start_buffer, stop=stop_buffer, step=step, id_type=id_type)
 
 
 @lru_cache()
@@ -184,6 +221,7 @@ def ephem(
     target: str,
     time: Time = None,
     sector: Optional[int] = None,
+    time_step: float = 1.0,
     verbose: bool = False,
     id_type: str = "smallbody",
     interpolation_step: str = "12H",
@@ -200,6 +238,8 @@ def ephem(
         By default, one time stamp for every day in the TESS mission will be queried.
     sector : int
         Sector number.  Will be ignored if ``time`` is passed.
+    time_step : float
+        Resolution of time grid if ``sector`` is passed, in days. Will be ignored if ``time`` is passed.
     verbose : bool
         Return extra parameters?
     id_type : str
@@ -219,9 +259,9 @@ def ephem(
     if time is None:
         te, start, stop = TessEphem.from_sector(target, sector, step=interpolation_step, id_type=id_type, return_time=True)
 
-        # One time stamp per day between start and stop, with one-day buffer.
+        # One time stamp per day between start and stop.
         days = np.ceil((stop - start).sec / (60 * 60 * 24))
-        time = start + TimeDelta(np.arange(-1, days + 2, 1.0), format='jd')
+        time = start + TimeDelta(np.arange(0, days + time_step, time_step), format='jd')
 
     else:
         if not isinstance(time, Time):
@@ -233,4 +273,4 @@ def ephem(
         te = TessEphem(
             target, start=start, stop=stop, step=interpolation_step, id_type=id_type
         )
-    return te.predict(time=time, aberrate=aberrate, verbose=verbose)
+    return te.predict(time=time, verbose=verbose)
