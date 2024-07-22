@@ -114,6 +114,11 @@ class TessEphem:
             One row for each time stamp that matched a TESS observation.
         """
 
+        if not isinstance(time, Time):
+            time = Time(time)
+        if time.isscalar:
+            time = time.reshape((1,))
+
         sky = self.predict_sky(time)
         crd = SkyCoord(sky.ra, sky.dec, unit="deg")
         log.info("Started matching the ephemeris to TESS observations")
