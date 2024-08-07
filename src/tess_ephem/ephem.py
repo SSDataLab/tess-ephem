@@ -1,4 +1,5 @@
 """Defines the main interface, i.e. the `ephem` function."""
+
 from functools import lru_cache
 from typing import Optional
 
@@ -49,9 +50,9 @@ class TessEphem:
             location=location,
         )
         self._raf = create_angle_interpolator(
-            eph["datetime_jd"], eph["RA_app"], enforce_positive=True
+            eph["datetime_jd"], eph["RA"], enforce_positive=True
         )
-        self._decf = create_angle_interpolator(eph["datetime_jd"], eph["DEC_app"])
+        self._decf = create_angle_interpolator(eph["datetime_jd"], eph["DEC"])
         if "V" in eph.columns:
             mag = eph["V"]
         else:
@@ -95,9 +96,7 @@ class TessEphem:
             }
         )
 
-    def predict(
-        self, time: Time, verbose: bool = False 
-    ) -> DataFrame:
+    def predict(self, time: Time, verbose: bool = False) -> DataFrame:
         """
         Predicts position of target at times.
 
@@ -125,33 +124,39 @@ class TessEphem:
 
         # Get sector, camera, ccd, col, row at each time.
         df = DataFrame()
-        for i,t in enumerate(time):
+        for i, t in enumerate(time):
             try:
                 result = locate.get_pixel_locations(crd[i], time=t).to_pandas()
-                result['time'] = t
-                df = concat([df,result[['time', 'Sector', 'Camera', 'CCD', 'Column', 'Row']]])
+                result["time"] = t
+                df = concat(
+                    [df, result[["time", "Sector", "Camera", "CCD", "Column", "Row"]]]
+                )
             # If object is not observed by TESS at time, skip time.
             except ValueError:
                 continue
 
         if len(df) == 0:
-            print('Warning: Target not observed by TESS at defined times.')
-
-        # Make column names lowercase in df
-        df.columns = [x.lower() for x in df.columns]
-        # Make sector, camera, ccd integers
-        df = df.astype({'sector': int, 'camera': int, 'ccd': int})
-        if verbose:
-            df = df.merge(sky, on='time', how="inner")
-        df = df.set_index('time')
-        if not verbose:
-            df = df[['sector', 'camera', 'ccd', 'column', 'row']]
+            print("Warning: Target not observed by TESS at defined times.")
+        else:
+            # Make column names lowercase in df
+            df.columns = [x.lower() for x in df.columns]
+            # Make sector, camera, ccd integers
+            df = df.astype({"sector": int, "camera": int, "ccd": int})
+            if verbose:
+                df = df.merge(sky, on="time", how="inner")
+            df = df.set_index("time")
+            if not verbose:
+                df = df[["sector", "camera", "ccd", "column", "row"]]
 
         return df
 
     @staticmethod
     def from_sector(
-        target: str, sector: int, id_type: str = "smallbody", step: str = "12H", return_time: bool = False
+        target: str,
+        sector: int | None,
+        id_type: str = "smallbody",
+        step: str = "12H",
+        return_time: bool = False,
     ):
         """
         Initialises TessEphem object from sector number.
@@ -160,7 +165,7 @@ class TessEphem:
         ----------
         target : str
             Horizons target ID.
-        sector : int
+        sector : int or None
             Sector number.
         id_type : str
             JPL/Horizons target identifier type.
@@ -181,21 +186,49 @@ class TessEphem:
             If return_time, sector end time.
         """
 
-        # Sector must be in pointings
-        if sector not in pointings['Sector']:
-            raise KeyError('Sector must be in range {0}-{1}'.format(pointings['Sector'][0],pointings['Sector'][-1]))
+        # If no sector passed, use all sectors in pointings file.
+        if sector is None:
+            # Define start and stop using pointings file from tesswcs
+            start, stop = Time(pointings["Start"][0], format="jd"), Time(
+                pointings["End"][-1], format="jd"
+            )
 
-        # Define start and stop of sector using pointings file from tesswcs
-        start, stop = Time(pointings[pointings['Sector'] == sector]['Start'][0], format='jd'), Time(pointings[pointings['Sector'] == sector]['End'][0], format='jd')
+        else:
+            # Sector must be in pointings
+            if sector not in pointings["Sector"]:
+                raise KeyError(
+                    "Sector must be in range {0}-{1}".format(
+                        pointings["Sector"][0], pointings["Sector"][-1]
+                    )
+                )
 
-        # Buffer of one day on start, stop for future interpolation of ephemeris. 
-        start_buffer, stop_buffer = start - TimeDelta(1, format='jd'), stop + TimeDelta(1, format='jd')
+            # Define start and stop of sector using pointings file from tesswcs
+            start, stop = Time(
+                pointings[pointings["Sector"] == sector]["Start"][0], format="jd"
+            ), Time(pointings[pointings["Sector"] == sector]["End"][0], format="jd")
+
+        # Buffer of one day on start, stop for future interpolation of ephemeris.
+        start_buffer, stop_buffer = start - TimeDelta(1, format="jd"), stop + TimeDelta(
+            1, format="jd"
+        )
 
         # Return TessEphem object (and start/stop, if return_time=True)
         if return_time:
-            return TessEphem(target, start=start_buffer, stop=stop_buffer, step=step, id_type=id_type), start, stop
-        else: 
-            return TessEphem(target, start=start_buffer, stop=stop_buffer, step=step, id_type=id_type)
+            return (
+                TessEphem(
+                    target,
+                    start=start_buffer,
+                    stop=stop_buffer,
+                    step=step,
+                    id_type=id_type,
+                ),
+                start,
+                stop,
+            )
+        else:
+            return TessEphem(
+                target, start=start_buffer, stop=stop_buffer, step=step, id_type=id_type
+            )
 
 
 @lru_cache()
@@ -206,7 +239,7 @@ def _get_horizons_ephem(
     step: str = "12H",
     id_type: str = "smallbody",
     location: str = "@TESS",
-    quantities: str = "2,3,9,19,20,43",
+    quantities: str = "1,3,9,19,20,43",
 ):
     """Returns JPL Horizons ephemeris.
 
@@ -230,7 +263,6 @@ def ephem(
     verbose: bool = False,
     id_type: str = "smallbody",
     interpolation_step: str = "12H",
-    aberrate: bool = True,
 ) -> DataFrame:
     """Returns the ephemeris of a Solar System body in the TESS FFI data set.
 
@@ -253,8 +285,6 @@ def ephem(
         "comet_name", or "designation".
     interpolation_step : str
         Resolution at which ephemeris data will be obtained from JPL Horizons.
-    aberrate: bool
-        If True then use tess-point's approximate DVA when computing the pixel coordinates.
 
     Returns
     -------
@@ -262,19 +292,23 @@ def ephem(
         One row for each time stamp that matched a TESS observation.
     """
     if time is None:
-        te, start, stop = TessEphem.from_sector(target, sector, step=interpolation_step, id_type=id_type, return_time=True)
+        te, start, stop = TessEphem.from_sector(
+            target, sector, step=interpolation_step, id_type=id_type, return_time=True
+        )
 
-        # One time stamp per day between start and stop.
+        # Define time array using start, stop and time_step.
         days = np.ceil((stop - start).sec / (60 * 60 * 24))
-        time = start + TimeDelta(np.arange(0, days + time_step, time_step), format='jd')
+        time = start + TimeDelta(np.arange(0, days + time_step, time_step), format="jd")
 
     else:
         if not isinstance(time, Time):
             time = Time(time)
         if time.isscalar:
             time = time.reshape((1,))
-        start = time[0] - 7
-        stop = time[-1] + 7
+        # Buffer of seven days on start, stop for future interpolation of ephemeris.
+        # (Larger buffer than when defining start, stop from_sector() because, in this case, time might be a single value.)
+        start = time[0] - TimeDelta(7, format="jd")
+        stop = time[-1] + TimeDelta(7, format="jd")
         te = TessEphem(
             target, start=start, stop=stop, step=interpolation_step, id_type=id_type
         )
