@@ -189,9 +189,8 @@ class TessEphem:
         # If no sector passed, use all sectors in pointings file.
         if sector is None:
             # Define start and stop using pointings file from tesswcs
-            start, stop = Time(pointings["Start"][0], format="jd"), Time(
-                pointings["End"][-1], format="jd"
-            )
+            start = Time(pointings["Start"][0], format="jd")
+            stop = Time(pointings["End"][-1], format="jd")
 
         else:
             # Sector must be in pointings
@@ -203,14 +202,12 @@ class TessEphem:
                 )
 
             # Define start and stop of sector using pointings file from tesswcs
-            start, stop = Time(
-                pointings[pointings["Sector"] == sector]["Start"][0], format="jd"
-            ), Time(pointings[pointings["Sector"] == sector]["End"][0], format="jd")
+            start = Time(pointings[pointings["Sector"] == sector]["Start"][0], format="jd")
+            stop = Time(pointings[pointings["Sector"] == sector]["End"][0], format="jd")
 
         # Buffer of one day on start, stop for future interpolation of ephemeris.
-        start_buffer, stop_buffer = start - TimeDelta(1, format="jd"), stop + TimeDelta(
-            1, format="jd"
-        )
+        start_buffer = start - TimeDelta(1, format="jd")
+        stop_buffer = stop + TimeDelta(1, format="jd")
 
         # Return TessEphem object (and start/stop, if return_time=True)
         if return_time:
