@@ -1,4 +1,5 @@
 """Defines the main interface, i.e. the `ephem` function."""
+
 from functools import lru_cache
 from typing import Optional
 
