@@ -1,4 +1,5 @@
 """Helper functions to deal with spherical angles."""
+
 from typing import Callable, Sequence
 
 import numpy as np
