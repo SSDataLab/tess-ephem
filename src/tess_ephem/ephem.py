@@ -202,7 +202,9 @@ class TessEphem:
                 )
 
             # Define start and stop of sector using pointings file from tesswcs
-            start = Time(pointings[pointings["Sector"] == sector]["Start"][0], format="jd")
+            start = Time(
+                pointings[pointings["Sector"] == sector]["Start"][0], format="jd"
+            )
             stop = Time(pointings[pointings["Sector"] == sector]["End"][0], format="jd")
 
         # Buffer of one day on start, stop for future interpolation of ephemeris.
