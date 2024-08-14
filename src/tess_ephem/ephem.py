@@ -153,7 +153,7 @@ class TessEphem:
     @staticmethod
     def from_sector(
         target: str,
-        sector: int | None,
+        sector: Optional[int] = None,
         id_type: str = "smallbody",
         step: str = "12H",
         return_time: bool = False,
