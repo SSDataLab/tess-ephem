@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tess-ephem"
-version = "0.5.0"
+version = "0.5.1"
 description = "Where are Solar System objects located in TESS FFI data?"
 license = "MIT"
 authors = ["Geert Barentsen <hello@geert.io>",
@@ -22,7 +22,7 @@ python = "^3.9"
 scipy = "^1.9.0"
 astroquery = "0.4.6"
 numpy = "^1.23.0"
-pandas = "^1.4.4"
+pandas = "^2.0"
 astropy = "^5.2.0"
 tesswcs = "^1.1.3"
 

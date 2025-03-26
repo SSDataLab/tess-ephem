@@ -136,7 +136,7 @@ class TessEphem:
                 continue
 
         if len(df) == 0:
-            print("Warning: Target not observed by TESS at defined times.")
+            log.warning("Warning: Target not observed by TESS at defined times.")
         else:
             # Make column names lowercase in df
             df.columns = [x.lower() for x in df.columns]
