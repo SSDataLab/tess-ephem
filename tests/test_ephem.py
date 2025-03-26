@@ -37,13 +37,13 @@ def test_predict():
     pixel_locations = ephem.predict(time=t)
 
     assert len(pixel_locations) == 1
-    assert pixel_locations["sector"][0] == 6
-    assert pixel_locations["camera"][0] == 1
-    assert pixel_locations["ccd"][0] == 1
+    assert pixel_locations.iloc[0]["sector"] == 6
+    assert pixel_locations.iloc[0]["camera"] == 1
+    assert pixel_locations.iloc[0]["ccd"] == 1
 
     # Expected col, row calculated by:
     # 1. using JPL/Horizons web interface to find RA,Dec of asteroid at time t.
     # 2. using tessrip to get average WCS from sector/camera/ccd
     # 3. converting RA,Dec to col,row with wcs_world2pix()
-    assert np.round(pixel_locations["row"][0], 1) == 1107.6
-    assert np.round(pixel_locations["column"][0], 1) == 1087.8
+    assert np.round(pixel_locations.iloc[0]["row"], 1) == 1107.6
+    assert np.round(pixel_locations.iloc[0]["column"], 1) == 1087.8

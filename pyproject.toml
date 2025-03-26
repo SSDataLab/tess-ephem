@@ -22,7 +22,7 @@ python = "^3.9"
 scipy = "^1.9.0"
 astroquery = "0.4.6"
 numpy = "^1.23.0"
-pandas = "^1.4.4"
+pandas = "^2.0"
 astropy = "^5.2.0"
 tesswcs = "^1.1.3"
 
