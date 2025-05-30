@@ -96,7 +96,7 @@ class TessEphem:
         ra = self._raf(time.jd)
         dec = self._decf(time.jd)
         v = self._vf(time.jd)
-        # If target is not an asteroid, H magnitude will be nan.
+        # If target does not have H magnitude, set to nan.
         if hasattr(self, "_Hf"):
             H = self._Hf(time.jd)
         else:
