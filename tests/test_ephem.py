@@ -9,6 +9,7 @@ def test_comet():
     Does `ephem()` work for a comet identifier?
     Horizons provides a column called "Tmag" rather than "V" for a comet's
     total magnitude.  Let's make sure we support this!
+    Hmag is only relevant for an asteroid, let's check it's nan for this comet.
     """
     comet_ephem = ephem("90000700", time="2021-08-21")
     assert "vmag" in comet_ephem.columns
