@@ -1,6 +1,7 @@
-from tess_ephem import ephem, TessEphem
-from astropy.time import Time, TimeDelta
 import numpy as np
+from astropy.time import Time, TimeDelta
+
+from tess_ephem import TessEphem, ephem
 
 
 def test_comet():
@@ -9,7 +10,7 @@ def test_comet():
     Horizons provides a column called "Tmag" rather than "V" for a comet's
     total magnitude.  Let's make sure we support this!
     """
-    comet_ephem = ephem("90000700", time="2021-08-21", verbose=True)
+    comet_ephem = ephem("90000700", time="2021-08-21")
     assert "vmag" in comet_ephem.columns
 
 
