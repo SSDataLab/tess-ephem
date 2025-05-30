@@ -12,6 +12,7 @@ def test_comet():
     """
     comet_ephem = ephem("90000700", time="2021-08-21")
     assert "vmag" in comet_ephem.columns
+    assert np.isnan(comet_ephem["Hmag"]).all()
 
 
 def test_from_sector():
