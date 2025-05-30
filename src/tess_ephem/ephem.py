@@ -60,7 +60,7 @@ class TessEphem:
         else:
             mag = eph["Tmag"]  # total comet magnitude
         self._vf = CubicSpline(eph["datetime_jd"], mag)
-        # Asteroid absolute magnitude
+        # Absolute magnitude
         if "H" in eph.columns:
             self._Hf = CubicSpline(eph["datetime_jd"], eph["H"])
         # Sun-target distance
@@ -132,6 +132,9 @@ class TessEphem:
         -------
         ephemeris : DataFrame
             One row for each time stamp that matched a TESS observation.
+        orbital_elements_dict : dict
+            Average perihelion distance [AU], eccentricity and orbital inclination [deg] of the target during the queried time.
+            This is only returned if orbital_elements = True. 
         """
 
         if not isinstance(time, Time):
@@ -301,7 +304,7 @@ def _get_horizons_elements(
 
     This is simple cached wrapper around astroquery's Horizons.elements.
 
-    By not specifying a location, the Sun's center is used by default.
+    By not specifying a location, the heliocenter is used by default.
     """
     epochs = {"start": start.iso, "stop": stop.iso, "step": step}
     log.debug(f"Horizons query parameters:\n\tid={id}\n\tepochs={epochs}")
@@ -346,6 +349,9 @@ def ephem(
     -------
     ephemeris : DataFrame
         One row for each time stamp that matched a TESS observation.
+    orbital_elements_dict : dict
+        Average perihelion distance [AU], eccentricity and orbital inclination [deg] of the target during the queried time.
+        This is only returned if orbital_elements = True. 
     """
     if time is None:
         te, start, stop = TessEphem.from_sector(

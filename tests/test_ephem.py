@@ -9,11 +9,11 @@ def test_comet():
     Does `ephem()` work for a comet identifier?
     Horizons provides a column called "Tmag" rather than "V" for a comet's
     total magnitude.  Let's make sure we support this!
-    Hmag is only relevant for an asteroid, let's check it's nan for this comet.
+    Also, Hmag is not relevant for a comet, so let's check it's nan.
     """
     comet_ephem = ephem("90000700", time="2021-08-21")
     assert "vmag" in comet_ephem.columns
-    assert np.isnan(comet_ephem["Hmag"]).all()
+    assert np.isnan(comet_ephem["hmag"]).all()
 
 
 def test_from_sector():
@@ -50,3 +50,29 @@ def test_predict():
     # 3. converting RA,Dec to col,row with wcs_world2pix()
     assert np.round(pixel_locations.iloc[0]["row"], 1) == 1107.6
     assert np.round(pixel_locations.iloc[0]["column"], 1) == 1087.8
+
+
+def test_orbital_elements():
+    """
+    Check orbital elements are returned as expected.
+    """
+
+    _, orbital_elements = ephem("1980 VR1", sector=1, orbital_elements=True)
+    assert "perihelion_distance" in orbital_elements
+    assert "eccentricity" in orbital_elements
+    assert "orbital_inclination" in orbital_elements
+
+    # Check orbit is bound
+    assert (
+        orbital_elements["eccentricity"] >= 0 and orbital_elements["eccentricity"] < 1
+    )
+    # Check inclination is in expected range
+    assert (
+        orbital_elements["orbital_inclination"] >= 0
+        and orbital_elements["orbital_inclination"] <= 180
+    )
+    # 1980 VR1 is a main-belt asteroid: check perihelion distance is between Mars and Jupiter
+    assert (
+        orbital_elements["perihelion_distance"] > 1.5
+        and orbital_elements["perihelion_distance"] < 5
+    )
