@@ -112,7 +112,7 @@ class TessEphem:
                 "ra": ra,
                 "dec": dec,
                 "vmag": v,
-                "Hmag": H,
+                "hmag": H,
                 "sun_distance": r,
                 "obs_distance": delta,
                 "phase_angle": phi,

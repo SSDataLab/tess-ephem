@@ -13,7 +13,7 @@ tess-ephem
 .. |flake8| image:: https://github.com/SSDataLab/tess-ephem/workflows/flake8/badge.svg
 .. |mypy| image:: https://github.com/SSDataLab/tess-ephem/workflows/mypy/badge.svg
 
-`tess-ephem` is a user-friendly package which enables users to compute the positions of Solar System objects -- asteroids, comets, and planets --
+``tess-ephem`` is a user-friendly package which enables users to compute the positions of Solar System objects -- asteroids, comets, and planets --
 in the data archive of NASA's TESS Space Telescope.
 
 Installation
@@ -34,7 +34,7 @@ of a known minor planet, and obtain the result as a Pandas DataFrame. The output
 
     >>> from tess_ephem import ephem
     >>> ephem("Sedna")
-               sector  camera  ccd       column          row  pixels_per_hour        ra      dec    vmag  Hmag  sun_distance  obs_distance  phase_angle
+               sector  camera  ccd       column          row  pixels_per_hour        ra      dec    vmag  hmag  sun_distance  obs_distance  phase_angle
     time                                                                                                                                               
     2458437.5       5       1    4  1541.303105  1102.826838         0.069068  57.12707  7.65227  20.803  1.49     84.948291     83.983859       0.1482
     2458438.5       5       1    4  1543.100766  1102.946276         0.074363  57.11724  7.64961  20.803  1.49     84.947515     83.981039       0.1450
@@ -52,24 +52,24 @@ of a known minor planet, and obtain the result as a Pandas DataFrame. The output
 
 
 You can also obtain the ephemeris for one or more specific times
-by passing the `time` parameter:
+by passing the ``time`` parameter:
 
 .. code-block:: python
 
     >>> ephem("Sedna", time="2018-11-21 17:35:00")
-                             sector  camera  ccd       column          row  pixels_per_hour        ra      dec    vmag  Hmag  sun_distance  obs_distance  phase_angle
+                             sector  camera  ccd       column          row  pixels_per_hour        ra      dec    vmag  hmag  sun_distance  obs_distance  phase_angle
     time                                                                                                                                                             
     2018-11-21 17:35:00.000       5       1    4  1553.855013  1103.032894         0.074053  57.05786  7.63721  20.802  1.49     84.943069     83.975873       0.1419
 
     >>> from astropy.time import Time
     >>> ephem("Sedna", time=Time([2458441.5,2460258.5], format='jd'))
-               sector  camera  ccd       column          row  pixels_per_hour        ra      dec    vmag  Hmag  sun_distance  obs_distance  phase_angle
+               sector  camera  ccd       column          row  pixels_per_hour        ra      dec    vmag  hmag  sun_distance  obs_distance  phase_angle
     time                                                                                                                                               
     2458441.5       5       1    4  1548.747559  1103.038136         0.075132  57.08610  7.64284  20.801  1.49     84.945188     83.976314       0.1394
     2460258.5      71       2    4  1985.475079   996.244021         0.071257  60.17708  8.34965  20.744  1.49     83.589824     82.644125       0.2044
 
 
-Orbital elements can be obtained by passing the `orbital_elements=True` parameter. The function returns the average orbital elements during the queried time. Perihelion distance is in AU and orbital inclination is in degrees.
+Orbital elements can be obtained by passing the ``orbital_elements=True`` parameter. The function returns the average orbital elements of the target during the queried time. Perihelion distance is in AU and orbital inclination is in degrees.
 
 .. code-block:: python
 
@@ -79,12 +79,12 @@ Orbital elements can be obtained by passing the `orbital_elements=True` paramete
 
 
 You can alternatively obtain the ephemeris during a specific sector by passing 
-the `sector` parameter:
+the ``sector`` parameter:
 
 .. code-block:: python
 
     >>> ephem("Sedna", sector=70)
-               sector  camera  ccd       column          row  pixels_per_hour        ra      dec    vmag  Hmag  sun_distance  obs_distance  phase_angle
+               sector  camera  ccd       column          row  pixels_per_hour        ra      dec    vmag  hmag  sun_distance  obs_distance  phase_angle
     time                                                                                                                                               
     2460208.5      70       4    2  1965.969985  1827.030603         0.025550  60.53693  8.49483  20.815  1.49     83.625984     83.171959       0.6161
     2460209.5      70       4    2  1966.279804  1826.423362         0.029493  60.53386  8.49248  20.814  1.49     83.625260     83.156129       0.6112
@@ -113,11 +113,11 @@ the `sector` parameter:
     2460232.5      70       4    2  1974.077449  1802.019428         0.055711  60.40512  8.42297  20.785  1.49     83.608622     82.847125       0.4442
 
 
-When passing the `sector` parameter, the `time_step` is by default 1 day. 
+When passing the ``sector`` parameter, the ``time_step`` is by default 1 day. 
 This can be changed as follows:
 
     >>> ephem("Sedna", sector=70, time_step=0.1)
-               sector  camera  ccd       column          row  pixels_per_hour         ra       dec       vmag  Hmag  sun_distance  obs_distance  phase_angle
+               sector  camera  ccd       column          row  pixels_per_hour         ra       dec       vmag  hmag  sun_distance  obs_distance  phase_angle
     time                                                                                                                                                    
     2460207.6      70       4    2  1965.673822  1827.524121         0.026894  60.539373  8.496977  20.815973  1.49     83.626635     83.185495     0.620233
     2460207.7      70       4    2  1965.710011  1827.468236         0.026487  60.539100  8.496720  20.816002  1.49     83.626563     83.184025     0.619771
