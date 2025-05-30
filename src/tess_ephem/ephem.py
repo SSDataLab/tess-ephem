@@ -134,7 +134,7 @@ class TessEphem:
             One row for each time stamp that matched a TESS observation.
         orbital_elements_dict : dict
             Average perihelion distance [AU], eccentricity and orbital inclination [deg] of the target during the queried time.
-            This is only returned if orbital_elements = True. 
+            This is only returned if orbital_elements = True.
         """
 
         if not isinstance(time, Time):
@@ -351,7 +351,7 @@ def ephem(
         One row for each time stamp that matched a TESS observation.
     orbital_elements_dict : dict
         Average perihelion distance [AU], eccentricity and orbital inclination [deg] of the target during the queried time.
-        This is only returned if orbital_elements = True. 
+        This is only returned if orbital_elements = True.
     """
     if time is None:
         te, start, stop = TessEphem.from_sector(
