@@ -1,9 +1,9 @@
-import pytest
-
 import numpy as np
+import pytest
 from numpy import pi
-from numpy.testing import assert_array_equal, assert_almost_equal
-from tess_ephem.angle import enforce_positive_angle, create_angle_interpolator
+from numpy.testing import assert_almost_equal, assert_array_equal
+
+from tess_ephem.angle import create_angle_interpolator, enforce_positive_angle
 
 
 @pytest.mark.parametrize(

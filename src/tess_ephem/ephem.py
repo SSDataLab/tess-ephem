@@ -4,17 +4,16 @@ from functools import lru_cache
 from typing import Optional
 
 import numpy as np
+from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time, TimeDelta
-from astropy import units as u
 from astroquery.jplhorizons import Horizons
 from pandas import DataFrame, concat
 from scipy.interpolate import CubicSpline
-
 from tesswcs import locate, pointings
 
-from .angle import create_angle_interpolator
 from . import log
+from .angle import create_angle_interpolator
 
 
 class TessEphem:
@@ -26,6 +25,7 @@ class TessEphem:
         step: str = "12H",
         location: str = "@TESS",
         id_type: str = "smallbody",
+        orbital_elements: bool = False,
     ):
         """
         Parametrized as start, stop, step because it is the most efficient way to
@@ -39,8 +39,10 @@ class TessEphem:
         stop : Time
         step : str
         location : str
+        orbital_elements : bool
+            If True, returns osculating orbital elements for target (eccentricity, inclination, perihelion distance).
         """
-        log.info(f"Started querying JPL/Horizons for for ephemeris (id='{target}')")
+        log.info(f"Started querying JPL/Horizons for ephemeris (id='{target}')")
         eph = _get_horizons_ephem(
             id=target,
             id_type=id_type,
@@ -58,6 +60,9 @@ class TessEphem:
         else:
             mag = eph["Tmag"]  # total comet magnitude
         self._vf = CubicSpline(eph["datetime_jd"], mag)
+        # Absolute magnitude
+        if "H" in eph.columns:
+            self._Hf = CubicSpline(eph["datetime_jd"], eph["H"])
         # Sun-target distance
         self._rf = CubicSpline(eph["datetime_jd"], eph["r"])
         # Observer-target distance
@@ -75,10 +80,27 @@ class TessEphem:
         self.target = target
         self.ephemerides = eph
 
+        if orbital_elements:
+            log.info(
+                f"Started querying JPL/Horizons for orbital elements (id='{target}')"
+            )
+            self.elements = _get_horizons_elements(
+                id=target,
+                id_type=id_type,
+                start=start,
+                stop=stop,
+                step=step,
+            )
+
     def predict_sky(self, time: Time) -> DataFrame:
         ra = self._raf(time.jd)
         dec = self._decf(time.jd)
         v = self._vf(time.jd)
+        # If target does not have H magnitude, set to nan.
+        if hasattr(self, "_Hf"):
+            H = self._Hf(time.jd)
+        else:
+            H = np.full(len(time.jd), np.nan)
         r = self._rf(time.jd)
         delta = self._deltaf(time.jd)
         phi = self._phif(time.jd)
@@ -90,13 +112,14 @@ class TessEphem:
                 "ra": ra,
                 "dec": dec,
                 "vmag": v,
+                "hmag": H,
                 "sun_distance": r,
                 "obs_distance": delta,
                 "phase_angle": phi,
             }
         )
 
-    def predict(self, time: Time, verbose: bool = False) -> DataFrame:
+    def predict(self, time: Time) -> DataFrame:
         """
         Predicts position of target at times.
 
@@ -104,13 +127,14 @@ class TessEphem:
         ----------
         time : Time
             Times for which to compute the ephemeris.
-        verbose : bool
-            Return extra parameters?
 
         Returns
         -------
         ephemeris : DataFrame
             One row for each time stamp that matched a TESS observation.
+        orbital_elements_dict : dict
+            Average perihelion distance [AU], eccentricity and orbital inclination [deg] of the target during the queried time.
+            This is only returned if orbital_elements = True.
         """
 
         if not isinstance(time, Time):
@@ -142,13 +166,18 @@ class TessEphem:
             df.columns = [x.lower() for x in df.columns]
             # Make sector, camera, ccd integers
             df = df.astype({"sector": int, "camera": int, "ccd": int})
-            if verbose:
-                df = df.merge(sky, on="time", how="inner")
+            df = df.merge(sky, on="time", how="inner")
             df = df.set_index("time")
-            if not verbose:
-                df = df[["sector", "camera", "ccd", "column", "row"]]
 
-        return df
+        if hasattr(self, "elements"):
+            return df, {
+                "perihelion_distance": np.nanmean(self.elements["q"]),
+                "eccentricity": np.nanmean(self.elements["e"]),
+                "orbital_inclination": np.nanmean(self.elements["incl"]),
+            }
+
+        else:
+            return df
 
     @staticmethod
     def from_sector(
@@ -157,6 +186,7 @@ class TessEphem:
         id_type: str = "smallbody",
         step: str = "12H",
         return_time: bool = False,
+        orbital_elements: bool = False,
     ):
         """
         Initialises TessEphem object from sector number.
@@ -175,6 +205,8 @@ class TessEphem:
             Resolution at which ephemeris data will be obtained from JPL Horizons.
         return_time: bool
             If True then return start and stop time of sector.
+        orbital_elements : bool
+            If True, returns osculating orbital elements for target (eccentricity, inclination, perihelion distance).
 
         Returns
         -------
@@ -220,13 +252,19 @@ class TessEphem:
                     stop=stop_buffer,
                     step=step,
                     id_type=id_type,
+                    orbital_elements=orbital_elements,
                 ),
                 start,
                 stop,
             )
         else:
             return TessEphem(
-                target, start=start_buffer, stop=stop_buffer, step=step, id_type=id_type
+                target,
+                start=start_buffer,
+                stop=stop_buffer,
+                step=step,
+                id_type=id_type,
+                orbital_elements=orbital_elements,
             )
 
 
@@ -254,14 +292,36 @@ def _get_horizons_ephem(
     return result
 
 
+@lru_cache()
+def _get_horizons_elements(
+    id,
+    start: Time,
+    stop: Time,
+    step: str = "12H",
+    id_type: str = "smallbody",
+):
+    """Returns JPL Horizons orbital elements.
+
+    This is simple cached wrapper around astroquery's Horizons.elements.
+
+    By not specifying a location, the heliocenter is used by default.
+    """
+    epochs = {"start": start.iso, "stop": stop.iso, "step": step}
+    log.debug(f"Horizons query parameters:\n\tid={id}\n\tepochs={epochs}")
+    t = Horizons(id=id, id_type=id_type, epochs=epochs)
+    result = t.elements()
+    log.debug(f"Received {len(result)} elements results")
+    return result
+
+
 def ephem(
     target: str,
     time: Time = None,
     sector: Optional[int] = None,
     time_step: float = 1.0,
-    verbose: bool = False,
     id_type: str = "smallbody",
     interpolation_step: str = "12H",
+    orbital_elements: bool = False,
 ) -> DataFrame:
     """Returns the ephemeris of a Solar System body in the TESS FFI data set.
 
@@ -276,23 +336,31 @@ def ephem(
         Sector number.  Will be ignored if ``time`` is passed.
     time_step : float
         Resolution of time grid if ``sector`` is passed, in days. Will be ignored if ``time`` is passed.
-    verbose : bool
-        Return extra parameters?
     id_type : str
         JPL/Horizons target identifier type.
         One of "smallbody", "majorbody", "designation", "name", "asteroid_name",
         "comet_name", or "designation".
     interpolation_step : str
         Resolution at which ephemeris data will be obtained from JPL Horizons.
+    orbital_elements : bool
+        If True, returns osculating orbital elements for target (eccentricity, inclination, perihelion distance).
 
     Returns
     -------
     ephemeris : DataFrame
         One row for each time stamp that matched a TESS observation.
+    orbital_elements_dict : dict
+        Average perihelion distance [AU], eccentricity and orbital inclination [deg] of the target during the queried time.
+        This is only returned if orbital_elements = True.
     """
     if time is None:
         te, start, stop = TessEphem.from_sector(
-            target, sector, step=interpolation_step, id_type=id_type, return_time=True
+            target,
+            sector,
+            step=interpolation_step,
+            id_type=id_type,
+            return_time=True,
+            orbital_elements=orbital_elements,
         )
 
         # Define time array using start, stop and time_step.
@@ -309,6 +377,11 @@ def ephem(
         start = time[0] - TimeDelta(7, format="jd")
         stop = time[-1] + TimeDelta(7, format="jd")
         te = TessEphem(
-            target, start=start, stop=stop, step=interpolation_step, id_type=id_type
+            target,
+            start=start,
+            stop=stop,
+            step=interpolation_step,
+            id_type=id_type,
+            orbital_elements=orbital_elements,
         )
-    return te.predict(time=time, verbose=verbose)
+    return te.predict(time=time)
