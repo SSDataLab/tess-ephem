@@ -144,20 +144,26 @@ class TessEphem:
 
         sky = self.predict_sky(time)
         crd = SkyCoord(sky.ra, sky.dec, unit="deg")
-        log.info("Started matching the ephemeris to TESS observations")
 
-        # Get sector, camera, ccd, col, row at each time.
+        # Determine TESS sector corresponding to each time
+        sectors = []
+        for t in time.jd:
+            sectors.append(
+                pointings["Sector"].value[
+                    np.logical_and(t > pointings["Start"], t < pointings["End"])
+                ]
+            )
+
+        log.info("Started matching the ephemeris to TESS observations")
+        # Get sector, camera, ccd, col, row
         df = DataFrame()
-        for i, t in enumerate(time):
-            try:
-                result = locate.get_pixel_locations(crd[i], time=t).to_pandas()
-                result["time"] = t
-                df = concat(
-                    [df, result[["time", "Sector", "Camera", "CCD", "Column", "Row"]]]
-                )
-            # If object is not observed by TESS at time, skip time.
-            except ValueError:
-                continue
+        for s in np.unique(np.hstack(sectors)):
+            sector_mask = [s in sublist for sublist in sectors]
+            result = locate.get_pixel_locations(crd[sector_mask], sector=s).to_pandas()
+            result["time"] = time[sector_mask][result["Target Index"]]
+            df = concat(
+                [df, result[["time", "Sector", "Camera", "CCD", "Column", "Row"]]]
+            )
 
         if len(df) == 0:
             log.warning("Warning: Target not observed by TESS at defined times.")
