@@ -168,6 +168,8 @@ class TessEphem:
         if len(df) == 0:
             log.warning("Warning: Target not observed by TESS at defined times.")
         else:
+            # Reorder df in ascending time
+            df = df.sort_values(by="time", ascending=True)
             # Make column names lowercase in df
             df.columns = [x.lower() for x in df.columns]
             # Make sector, camera, ccd integers
