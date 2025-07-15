@@ -51,7 +51,7 @@ of a known minor planet, and obtain the result as a Pandas DataFrame. The output
     [75 rows x 14 columns]
 
 
-The time is in the UT scale. To convert this to the TDB timescale, the column "tdb-ut" (offset in seconds) should be used i.e. time_tdb = time + ([tdb-ut]/24/3600).
+The ``time`` is in the UT scale. To convert this to the TDB timescale, the column ``tdb-ut`` (offset in seconds) should be used.
 
 You can also obtain the ephemeris for one or more specific times
 by passing the ``time`` parameter:
