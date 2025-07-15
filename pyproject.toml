@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tess-ephem"
-version = "0.6.1"
+version = "0.6.2"
 description = "Where are Solar System objects located in TESS FFI data?"
 license = "MIT"
 authors = ["Geert Barentsen <hello@geert.io>",
